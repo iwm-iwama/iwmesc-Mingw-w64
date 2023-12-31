@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 #define   LIB_IWMUTIL_COPYLIGHT                   "(C)2008-2023 iwm-iwama"
-#define   LIB_IWMUTIL_VERSION                     "lib_iwmutil2_20231223"
+#define   LIB_IWMUTIL_VERSION                     "lib_iwmutil2_20231230"
 //////////////////////////////////////////////////////////////////////////////////////////
 #include <conio.h>
 #include <ctype.h>

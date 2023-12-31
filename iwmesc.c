@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20231225"
+#define   IWM_VERSION         "iwmesc_20231231"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -31,14 +31,11 @@ main()
 		imain_end();
 	}
 
-	WS *wp1 = 0;
-	WS *wp2 = 0;
-
 	// -e | -echo
 	if(iCLI_getOptMatch(0, L"-e", L"-echo"))
 	{
 		WS *wa1[] = { L"-e", L"-echo" };
-		wp1 = iws_cnv_escape(rtnArgPointer(wa1));
+		WS *wp1 = iws_cnv_escape(rtnArgPointer(wa1));
 			P1W(wp1);
 		ifree(wp1);
 	}
@@ -46,10 +43,10 @@ main()
 	else if(iCLI_getOptMatch(0, L"-c", L"-command"))
 	{
 		WS *wa1[] = { L"-c", L"-command" };
-		wp1 = rtnArgPointer(wa1);
+		WS *wp1 = rtnArgPointer(wa1);
 		// STDERR 制御
 		wp1 = iws_cats(2, wp1, L" 2> NUL");
-			wp2 = iws_popen(wp1);
+			WS *wp2 = iws_popen(wp1);
 				P1W(wp2);
 			ifree(wp2);
 		ifree(wp1);
@@ -58,11 +55,71 @@ main()
 	else if(iCLI_getOptMatch(0, L"-s", L"-script"))
 	{
 		WS *wa1[] = { L"-s", L"-script" };
-		wp1 = rtnArgPointer(wa1);
-		// STDERR 制御
-		wp1 = iws_cats(2, wp1, L" 2> NUL");
-			imv_system(wp1, TRUE);
-		ifree(wp1);
+		CONST WS *Arg = rtnArgPointer(wa1);
+
+		BOOL bExecuted = FALSE;
+
+		// OK: foo／NG: "foo"
+		FILE *iFp = _wfopen($ARGV[1], L"rb");
+		if(iFp)
+		{
+			// 1行目を取得
+			//   #! の記述は「1行目」に限定する
+			MS buf[256];
+			MS *mp1 = fgets(buf, sizeof(buf), iFp);
+			INT iLen = imn_len(mp1);
+
+			// UTF-8 BOM
+			if(iLen >= 3 && mp1[0] == (MS)0xEF && mp1[1] == (MS)0xBB && mp1[2] == (MS)0xBF)
+			{
+				mp1 += 3;
+				iLen -= 3;
+			}
+
+			// 先頭の空白をスルー
+			while(iLen >= 0 && *mp1 == ' ')
+			{
+				++mp1;
+				--iLen;
+			}
+
+			// #!
+			if(iLen >= 2 && mp1[0] == '#' && mp1[1] == '!')
+			{
+				mp1 += 2;
+				bExecuted = TRUE;
+
+				// インタプリタ名を取得
+				INT iPos = (iLen - 2) - 1;
+				if(iPos >= 0)
+				{
+					// 末尾の改行を消去
+					while(iPos >= 0 && (mp1[iPos] == '\n' || mp1[iPos] == '\r'))
+					{
+						mp1[iPos] = 0;
+						--iPos;
+					}
+
+					if(*mp1)
+					{
+						WS *wp1 = M2W(mp1);
+							WS *wp2 = iws_cats(3, wp1, L" ", Arg);
+								imv_system(wp2, TRUE);
+							ifree(wp2);
+						ifree(wp1);
+					}
+				}
+			}
+			fclose(iFp);
+		}
+
+		if(! bExecuted)
+		{
+			// STDERR 制御
+			WS *wp1 = iws_cats(2, Arg, L" 2> NUL");
+				imv_system(wp1, TRUE);
+			ifree(wp1);
+		}
 	}
 
 	///icalloc_mapPrint(); ifree_all(); icalloc_mapPrint();
@@ -108,7 +165,7 @@ print_version()
 VOID
 print_help()
 {
-	MS *_cmd = W2M($CMD);
+	MS *_cmd = "iwmesc.exe";
 
 	print_version();
 	P(
@@ -120,16 +177,24 @@ print_help()
 		IESC_LBL1	" (例１)\n"
 		IESC_STR1	"    %s"
 		IESC_OPT2	" -echo"
-		IESC_OPT1	" \\033[92mテキスト\\n\\033[93m表示\\033[0m\\n\n\n"
+		IESC_OPT1	" \\033[92mテキスト\\n\\033[96m表示\\033[0m\\n\n\n"
 		IESC_LBL1	" (例２)\n"
 		IESC_STR1	"    %s"
 		IESC_OPT2	" -command"
-		IESC_OPT1	" dir /b\n\n"
-		IESC_LBL1	" (例３)\n"
+		IESC_OPT1	" ls -la\n\n"
+		IESC_LBL1	" (例３)-1\n"
 		IESC_STR1	"    %s"
 		IESC_OPT2	" -script"
-		IESC_OPT1	" python -c \"print('\\033[92mテキスト\\n\\033[93m表示\\033[0m\\n')\"\n\n"
-		, _cmd, _cmd, _cmd, _cmd
+		IESC_OPT1	" python -c \"print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')\"\n\n"
+		IESC_LBL1	" (例３)-2\n"
+		IESC_STR1	"    %s"
+		IESC_OPT2	" -script"
+		IESC_STR1   " \033[44m foo \033[49m\n"
+					"\033[23C\033[44m   #!python.exe                                      \033[49m\n"
+					"\033[23C\033[44m   #coding:utf-8                                     \033[49m\n"
+					"\033[23C\033[44m   print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
+		IESC_STR2	"\033[23C ※以降の引数は\"foo\"の引数になる\n"
+		, _cmd, _cmd, _cmd, _cmd, _cmd
 	);
 	P1(
 		IESC_OPT2	" [Option]\n"
@@ -140,11 +205,10 @@ print_help()
 		IESC_STR2	"        ※出力コードはコンソール基準\n\n"
 		IESC_OPT21	"    -script Str | -s Str\n"
 		IESC_STR1	"        Strをスクリプトとして実行\n"
+		IESC_STR1	"        Strがスクリプトファイルのとき（1行目）#! のインタプリタを使用\n"
 		IESC_STR2	"        ※出力コードはスクリプト基準\n\n"
 	);
 	P1(IESC_STR2);
 	LN(80);
 	P1(IESC_RESET);
-
-	ifree(_cmd);
 }
