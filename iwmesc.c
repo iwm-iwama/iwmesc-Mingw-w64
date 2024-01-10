@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-#define   IWM_COPYRIGHT       "(C)2023 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20231231"
+#define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
+#define   IWM_VERSION         "iwmesc_20240109"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -36,19 +36,17 @@ main()
 	{
 		WS *wa1[] = { L"-e", L"-echo" };
 		WS *wp1 = iws_cnv_escape(rtnArgPointer(wa1));
-			P1W(wp1);
-		ifree(wp1);
-	}
-	// -c | -command
-	else if(iCLI_getOptMatch(0, L"-c", L"-command"))
-	{
-		WS *wa1[] = { L"-c", L"-command" };
-		WS *wp1 = rtnArgPointer(wa1);
-		// STDERR 制御
-		wp1 = iws_cats(2, wp1, L" 2> NUL");
-			WS *wp2 = iws_popen(wp1);
-				P1W(wp2);
-			ifree(wp2);
+			if(*wp1)
+			{
+				P1W(wp1);
+			}
+			// STDINモードへ移行
+			else
+			{
+				WS *wp2 = iCLI_GetStdin();
+					P1W(wp2);
+				ifree(wp2);
+			}
 		ifree(wp1);
 	}
 	// -s | -script
@@ -156,7 +154,10 @@ print_version()
 	P(
 		" %s\n"
 		"    %s+%s\n"
-		, IWM_COPYRIGHT, IWM_VERSION, LIB_IWMUTIL_VERSION
+		,
+		IWM_COPYRIGHT,
+		IWM_VERSION,
+		LIB_IWMUTIL_VERSION
 	);
 	LN(80);
 	P1(IESC_RESET);
@@ -174,34 +175,43 @@ print_help()
 		IESC_STR1	"    %s"
 		IESC_OPT2	" [Option]"
 		IESC_OPT1	" [Str]\n\n"
-		IESC_LBL1	" (例１)\n"
-		IESC_STR1	"    %s"
+		IESC_LBL1	" (例１)"
+		IESC_STR1	" -echo 引数渡し\n"
+					"    %s"
 		IESC_OPT2	" -echo"
 		IESC_OPT1	" \\033[92mテキスト\\n\\033[96m表示\\033[0m\\n\n\n"
-		IESC_LBL1	" (例２)\n"
-		IESC_STR1	"    %s"
-		IESC_OPT2	" -command"
-		IESC_OPT1	" ls -la\n\n"
-		IESC_LBL1	" (例３)-1\n"
-		IESC_STR1	"    %s"
+		IESC_LBL1	" (例２)"
+		IESC_STR1	" -echo パイプ渡し\n"
+		IESC_OPT1	"    ls -la |"
+		IESC_STR1	" %s"
+		IESC_OPT2	" -echo\n\n"
+		IESC_LBL1	" (例３)"
+		IESC_STR1	" -script 直接実行\n"
+					"    %s"
 		IESC_OPT2	" -script"
 		IESC_OPT1	" python -c \"print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')\"\n\n"
-		IESC_LBL1	" (例３)-2\n"
-		IESC_STR1	"    %s"
+		IESC_LBL1	" (例４)"
+		IESC_STR1	" -script ファイルから実行\n"
+					"    %s"
 		IESC_OPT2	" -script"
 		IESC_STR1   " \033[44m foo \033[49m\n"
-					"\033[23C\033[44m   #!python.exe                                      \033[49m\n"
-					"\033[23C\033[44m   #coding:utf-8                                     \033[49m\n"
-					"\033[23C\033[44m   print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
+					"\033[23C\033[44m                                                    \033[49m\n"
+					"\033[23C\033[44m  #!python                                          \033[49m\n"
+					"\033[23C\033[44m  #coding:utf-8                                     \033[49m\n"
+					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
+					"\033[23C\033[44m                                                    \033[49m\n"
 		IESC_STR2	"\033[23C ※以降の引数は\"foo\"の引数になる\n"
-		, _cmd, _cmd, _cmd, _cmd, _cmd
+		,
+		_cmd,
+		_cmd,
+		_cmd,
+		_cmd,
+		_cmd
 	);
 	P1(
 		IESC_OPT2	" [Option]\n"
 		IESC_OPT21	"    -echo Str | -e Str\n"
-		IESC_STR1	"        Strをテキスト表示\n\n"
-		IESC_OPT21	"    -command Str | -c Str\n"
-		IESC_STR1	"        Strをコマンドとして実行\n"
+		IESC_STR1	"        Strをテキスト表示\n"
 		IESC_STR2	"        ※出力コードはコンソール基準\n\n"
 		IESC_OPT21	"    -script Str | -s Str\n"
 		IESC_STR1	"        Strをスクリプトとして実行\n"

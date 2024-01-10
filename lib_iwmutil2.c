@@ -2049,41 +2049,57 @@ ifind2(
 	WS *path
 )
 {
-	$struct_iFinfoW *FI = iFinfo_allocW();
-		// FI->sPathW 末尾に "*" を付与
-		UINT pathLen = iwn_cpy(FI->sPathW, path);
-			*(FI->sPathW + pathLen) = '*';
-			*(FI->sPathW + pathLen + 1) = 0;
-		WIN32_FIND_DATAW F;
-		HANDLE hfind = FindFirstFileW(FI->sPathW, &F);
-			// アクセス不可なフォルダなど
-			if(hfind == INVALID_HANDLE_VALUE)
-			{
-				FindClose(hfind);
-				return;
-			}
-			if(iFinfo_initW(FI, &F, path, NULL))
-			{
-				WS *wp1 = 0;
-				P1("fname: ");
-				P2W(FI->sPathW);
-				P("bytes: %llu\n", FI->uFsize);
-				P1("ctime: ");
-				wp1 = idate_format_cjdToW(NULL, FI->cjdCtime);
-					P2W(wp1);
-				ifree(wp1);
-				P1("mtime: ");
-				wp1 = idate_format_cjdToW(NULL, FI->cjdMtime);
-					P2W(wp1);
-				ifree(wp1);
-				P1("atime: ");
-				wp1 = idate_format_cjdToW(NULL, FI->cjdAtime);
-					P2W(wp1);
-				ifree(wp1);
-				NL();
-			}
-		FindClose(hfind);
-	iFinfo_freeW(FI);
+	INT iPos = iwn_len(path) - 1;
+	for(; iPos >= 0; iPos--)
+	{
+		if(path[iPos] == '\\' || path[iPos] == '/')
+		{
+			break;
+		}
+	}
+	++iPos;
+	WS *dir = iws_clone(path);
+		dir[iPos] = 0;
+	WS *name = iws_clone(path + iPos);
+		$struct_iFinfoW *FI = iFinfo_allocW();
+			iwn_cpy(FI->sPathW, path);
+			WIN32_FIND_DATAW F;
+			HANDLE hfind = FindFirstFileW(FI->sPathW, &F);
+				// アクセス不可なフォルダなど
+				if(hfind == INVALID_HANDLE_VALUE)
+				{
+					FindClose(hfind);
+					return;
+				}
+				if(iFinfo_initW(FI, &F, dir, name))
+				{
+					WS *wp1 = 0;
+					P1("Path:    ");
+						P2W(FI->sPathW);
+					P1("FnPos:   ");
+						P3(FI->uFnPosW);
+					P1("Fn:      ");
+						P2W(FI->sPathW + FI->uFnPosW);
+					P1("Bytes:   ");
+						P3(FI->uFsize);
+					P1("Ctime:   ");
+						wp1 = idate_format_cjdToWS(NULL, FI->cjdCtime);
+							P2W(wp1);
+						ifree(wp1);
+					P1("Mtime:   ");
+						wp1 = idate_format_cjdToWS(NULL, FI->cjdMtime);
+							P2W(wp1);
+						ifree(wp1);
+					P1("Atime:   ");
+						wp1 = idate_format_cjdToWS(NULL, FI->cjdAtime);
+							P2W(wp1);
+						ifree(wp1);
+					NL();
+				}
+			FindClose(hfind);
+		iFinfo_freeW(FI);
+	ifree(name);
+	ifree(dir);
 }
 	//
 	// main()
@@ -2099,18 +2115,18 @@ $struct_iFinfoW
 //---------------------------
 // ファイル情報取得の前処理
 //---------------------------
-// v2023-08-28
+// v2024-01-04
 BOOL
 iFinfo_initW(
 	$struct_iFinfoW *FI,
 	WIN32_FIND_DATAW *F,
 	WS *dir, // "\"を付与して呼ぶ
-	WS *name
+	WS *fname
 )
 {
 	// 初期化
 	*FI->sPathW  = 0;
-	FI->uFname   = 0;
+	FI->uFnPosW  = 0;
 	FI->uAttr    = 0;
 	FI->bType    = FALSE;
 	FI->cjdCtime = 0.0;
@@ -2118,7 +2134,7 @@ iFinfo_initW(
 	FI->cjdAtime = 0.0;
 	FI->uFsize   = 0;
 	// Dir "." ".." は除外
-	if(name && *name && iwb_cmp_leqfi(name, L".."))
+	if(fname && *fname && iwb_cmp_leqfi(fname, L".."))
 	{
 		return FALSE;
 	}
@@ -2132,7 +2148,7 @@ iFinfo_initW(
 	// FI->sPathW
 	// FI->uFname
 	UINT dirLen  = iwn_cpy(FI->sPathW, dir);
-	UINT nameLen = iwn_cpy((FI->sPathW + dirLen), name);
+	UINT nameLen = iwn_cpy((FI->sPathW + dirLen), fname);
 	// FI->bType
 	// FI->uFsize
 	if(FI->uAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -2152,7 +2168,7 @@ iFinfo_initW(
 		// FI->bType = FALSE 初期化値
 		FI->uFsize = (UINT64)F->nFileSizeLow + (F->nFileSizeHigh ? (UINT64)(F->nFileSizeHigh) * MAXDWORD + 1 : 0);
 	}
-	FI->uFname = dirLen;
+	FI->uFnPosW = dirLen;
 	// JST変換
 	// FI->cftime
 	// FI->mftime
@@ -2219,7 +2235,7 @@ iFinfo_freeW(
 */
 // v2023-07-24
 WS
-*iFinfo_attrToW(
+*iFinfo_attrToWS(
 	UINT uAttr
 )
 {
@@ -2287,7 +2303,7 @@ iFinfo_attrWtoINT(
 */
 // v2023-07-20
 WS
-*iFinfo_ftimeToW(
+*iFinfo_ftimeToWS(
 	FILETIME ft
 )
 {
@@ -2313,13 +2329,21 @@ WS
 	}
 	return rtn;
 }
-// v2015-01-03
+// v2024-01-06
+INT64
+iFinfo_ftimeToI64(
+	FILETIME ftime
+)
+{
+	return (((INT64)ftime.dwHighDateTime << 32) + ftime.dwLowDateTime);
+}
+// v2024-01-06
 DOUBLE
 iFinfo_ftimeToCjd(
 	FILETIME ftime
 )
 {
-	INT64 i1 = ((INT64)ftime.dwHighDateTime << 32) + ftime.dwLowDateTime;
+	INT64 i1 = iFinfo_ftimeToI64(ftime);
 	i1 /= 10000000; // (重要) MicroSecond 削除
 	return ((DOUBLE)i1 / 86400) + 2305814.0;
 }
@@ -2649,30 +2673,28 @@ iConsole_EscOn()
 // STDIN から直接読込
 //---------------------
 /* (例)
-	// dir | a.exe
-	if(! $ARGC)
-	{
-		// [Ctrl]+[Z] ↵ で入力終了
-		WS *wp1 = iCLI_GetStdin();
-		NL();
-		P1("\033[96m");
-		P2W(wp1);
-		P1("\033[0m");
-		ifree(wp1);
-	}
+	// 手入力のとき
+	//   [Enter] [Ctrl]+[Z] [Enter] で入力終了
+	WS *wp1 = iCLI_GetStdin();
+		P("\033[93m" "[wcslen = %d]" "\033[0m\n", wcslen(wp1));
+		P1("\033[92m");
+		P1W(wp1);
+		P1("\033[0m\n\n");
+	ifree(wp1);
 */
-// v2023-12-23
+// v2024-01-06
 WS
 *iCLI_GetStdin()
 {
-	UINT64 mp1Size = 100;
-	UINT64 mp1End = 0;
+	INT64 mp1Size = 256;
+	INT64 mp1End = 0;
 	MS *mp1 = icalloc_MS(mp1Size);
 
+	// 手入力のとき
+	//   [Enter] [Ctrl]+[Z] [Enter] で入力終了
 	INT c = 0;
 	while((c = getchar()) != EOF)
 	{
-		// [Ctrl]+[Z] ↵ で入力終了
 		mp1[mp1End] = (MS)c;
 		++mp1End;
 		if(mp1End >= mp1Size)
@@ -2681,16 +2703,21 @@ WS
 			mp1 = irealloc_MS(mp1, mp1Size);
 		}
 	}
-	mp1[mp1End] = 0;
+
+	// 末尾の特殊文字を消去してから'\n'付与
+	//   -1=EOF／10='\n'／32=' '
+	for(--mp1End; mp1End >= 0 && mp1[mp1End] <= 32; mp1End--)
+	{
+		mp1[mp1End] = 0;
+	}
+	mp1[mp1End + 1] = '\n';
 
 	///PL3(imn_Codepage(mp1));
-	///PL3(GetConsoleCP());
-	///PL3(GetConsoleOutputCP());
-	///PL3(GetACP());
 	WS *rtn = icnv_M2W(mp1, imn_Codepage(mp1));
 	ifree(mp1);
 
-	// CodePage
+	// リセット
+	iConsole_EscOn();
 	SetConsoleOutputCP(65001);
 
 	return rtn;
@@ -3628,11 +3655,11 @@ WS
 	return rtn;
 }
 /* (例)
-	PL2W(idate_format_cjdToW(NULL, idate_nowToCjd_localtime()));
+	PL2W(idate_format_cjdToWS(NULL, idate_nowToCjd_localtime()));
 */
 // v2023-07-13
 WS
-*idate_format_cjdToW(
+*idate_format_cjdToWS(
 	WS *format, // NULL=IDATE_FORMAT_STD
 	DOUBLE cjd
 )
