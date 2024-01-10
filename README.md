@@ -4,14 +4,21 @@
 
 【このプログラムについて】
 
-    DOSプロンプトでエスケープシーケンス表示（\033[...）を行うコマンドです。
-    以下のオプションがあります。
+	DOSプロンプトでエスケープシーケンス表示（\033[...）を行うコマンドです。
 
-    -echo Str
-        Strをテキスト表示
+	(例１) -echo 引数渡し
+		iwmesc.exe -echo \033[92mテキスト\n\033[96m表示\033[0m\n
 
-    -command Str
-        Strをコマンドとして実行
+	(例２) -echo パイプ渡し
+		ls -la | iwmesc.exe -echo
 
-    -script Str
-        Strをスクリプトとして実行
+	(例３) -script 直接実行
+		iwmesc.exe -script python -c "print('\033[92mテキスト\n\033[96m表示\033[0m\n')"
+
+	(例４) -script ファイルから実行
+		iwmesc.exe -script foo
+		                    ↑
+		                   #!python
+		                   #coding:utf-8
+		                   print('\033[92mテキスト\n\033[96m表示\033[0m\n')
+	   
