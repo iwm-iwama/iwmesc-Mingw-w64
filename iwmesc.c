@@ -170,11 +170,10 @@ print_help()
 
 	print_version();
 	P(
-		IESC_TITLE1	" エスケープシーケンスを含むコマンドを実行／出力 "
-		IESC_RESET	"\n"
+		IESC_TITLE1	" エスケープシーケンスを含むコマンドを実行／出力 "	IESC_RESET	"\n\n"
 		IESC_STR1	"    %s"
 		IESC_OPT2	" [Option]"
-		IESC_OPT1	" [Str]\n\n"
+		IESC_OPT1	" [Str]\n\n\n"
 		IESC_LBL1	" (例１)"
 		IESC_STR1	" -echo 引数渡し\n"
 					"    %s"
@@ -200,7 +199,7 @@ print_help()
 					"\033[23C\033[44m  #coding:utf-8                                     \033[49m\n"
 					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
-		IESC_STR2	"\033[23C ※以降の引数は\"foo\"の引数になる\n"
+		IESC_STR2	"\033[23C ※以降の引数は\"foo\"の引数になる\n\n"
 		,
 		_cmd,
 		_cmd,
