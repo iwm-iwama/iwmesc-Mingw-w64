@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240109"
+#define   IWM_VERSION         "iwmesc_20240212"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -101,9 +101,9 @@ main()
 					if(*mp1)
 					{
 						WS *wp1 = M2W(mp1);
-							WS *wp2 = iws_cats(3, wp1, L" ", Arg);
-								imv_system(wp2, TRUE);
-							ifree(wp2);
+						WS *wp2 = iws_cats(3, wp1, L" ", Arg);
+							imv_system(wp2, TRUE);
+						ifree(wp2);
 						ifree(wp1);
 					}
 				}
@@ -115,7 +115,9 @@ main()
 		{
 			// STDERR 制御
 			WS *wp1 = iws_cats(2, Arg, L" 2> NUL");
-				imv_system(wp1, TRUE);
+			WS *wp2 = iws_popen(wp1);
+				P1W(wp2);
+			ifree(wp2);
 			ifree(wp1);
 		}
 	}
@@ -210,11 +212,10 @@ print_help()
 	P1(
 		IESC_OPT2	" [Option]\n"
 		IESC_OPT21	"    -echo Str | -e Str\n"
-		IESC_STR1	"        Strをテキスト表示\n"
-		IESC_STR2	"        ※出力コードはコンソール基準\n\n"
+		IESC_STR1	"        Strをテキスト表示\n\n"
 		IESC_OPT21	"    -script Str | -s Str\n"
 		IESC_STR1	"        Strをスクリプトとして実行\n"
-		IESC_STR1	"        Strがスクリプトファイルのとき（1行目）#! のインタプリタを使用\n"
+					"        Strがスクリプトファイルのとき（1行目）#! のインタプリタを使用\n"
 		IESC_STR2	"        ※出力コードはスクリプト基準\n\n"
 	);
 	P1(IESC_STR2);
