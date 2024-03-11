@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240212"
+#define   IWM_VERSION         "iwmesc_20240310"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -53,7 +53,7 @@ main()
 	else if(iCLI_getOptMatch(0, L"-s", L"-script"))
 	{
 		WS *wa1[] = { L"-s", L"-script" };
-		CONST WS *Arg = rtnArgPointer(wa1);
+		WS *Arg = rtnArgPointer(wa1);
 
 		BOOL bExecuted = FALSE;
 
@@ -102,7 +102,7 @@ main()
 					{
 						WS *wp1 = M2W(mp1);
 						WS *wp2 = iws_cats(3, wp1, L" ", Arg);
-							imv_system(wp2, TRUE);
+							imv_systemW(wp2);
 						ifree(wp2);
 						ifree(wp1);
 					}
@@ -113,16 +113,11 @@ main()
 
 		if(! bExecuted)
 		{
-			// STDERR 制御
-			WS *wp1 = iws_cats(2, Arg, L" 2> NUL");
-			WS *wp2 = iws_popen(wp1);
-				P1W(wp2);
-			ifree(wp2);
-			ifree(wp1);
+			imv_systemW(Arg);
 		}
 	}
 
-	///icalloc_mapPrint(); ifree_all(); icalloc_mapPrint();
+	///idebug_map(); ifree_all(); idebug_map();
 
 	// 最終処理
 	imain_end();
@@ -201,7 +196,7 @@ print_help()
 					"\033[23C\033[44m  #coding:utf-8                                     \033[49m\n"
 					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
-		IESC_STR2	"\033[23C ※以降の引数は\"foo\"の引数になる\n\n"
+		IESC_STR2	"\033[23C ※foo以降の引数は\"fooの引数\"になる\n\n"
 		,
 		_cmd,
 		_cmd,
