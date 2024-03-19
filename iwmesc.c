@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240310"
+#define   IWM_VERSION         "iwmesc_20240319"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -75,38 +75,32 @@ main()
 			}
 
 			// 先頭の空白をスルー
-			while(iLen >= 0 && *mp1 == ' ')
+			while(iLen >= 0 && (*mp1 == ' ' || *mp1 == '\t'))
 			{
 				++mp1;
 				--iLen;
 			}
 
-			// #!
+			// #! インタプリタ名を取得
 			if(iLen >= 2 && mp1[0] == '#' && mp1[1] == '!')
 			{
+				// strlen("#!") => 2
 				mp1 += 2;
 				bExecuted = TRUE;
 
-				// インタプリタ名を取得
-				INT iPos = (iLen - 2) - 1;
-				if(iPos >= 0)
-				{
-					// 末尾の改行を消去
-					while(iPos >= 0 && (mp1[iPos] == '\n' || mp1[iPos] == '\r'))
-					{
-						mp1[iPos] = 0;
-						--iPos;
-					}
-
-					if(*mp1)
-					{
-						WS *wp1 = M2W(mp1);
-						WS *wp2 = iws_cats(3, wp1, L" ", Arg);
-							imv_systemW(wp2);
-						ifree(wp2);
-						ifree(wp1);
-					}
-				}
+				WS *wp1 = M2W(mp1);
+				WS *wp2 = iws_trimR(wp1);
+					// /usr/bin/env を無効化
+					WS *wp3 = iws_replace(wp2, L"/usr/bin/env ", L"", FALSE);
+					// /usr/bin/ を無効化
+					WS *wp4 = iws_replace(wp3, L"/usr/bin/", L"", FALSE);
+						WS *wp5 = iws_cats(3, wp4, L" ", Arg);
+							imv_systemW(wp5);
+						ifree(wp5);
+					ifree(wp4);
+					ifree(wp3);
+				ifree(wp2);
+				ifree(wp1);
 			}
 			fclose(iFp);
 		}
@@ -192,7 +186,7 @@ print_help()
 		IESC_OPT2	" -script"
 		IESC_STR1   " \033[44m foo \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
-					"\033[23C\033[44m  #!python                                          \033[49m\n"
+					"\033[23C\033[44m  #!/usr/bin/env python                             \033[49m\n"
 					"\033[23C\033[44m  #coding:utf-8                                     \033[49m\n"
 					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
