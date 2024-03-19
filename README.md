@@ -18,7 +18,7 @@
 	(例４) -script ファイルから実行
 		iwmesc.exe -script foo
 		                    ↑
-		                   #!python
+		                   #!/usr/bin/env python
 		                   #coding:utf-8
 		                   print('\033[92mテキスト\n\033[96m表示\033[0m\n')
 	   
