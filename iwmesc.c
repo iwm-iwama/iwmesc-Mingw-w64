@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240319"
+#define   IWM_VERSION         "iwmesc_20240522"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -17,8 +17,12 @@ main()
 
 	///iCLI_VarList();
 
+	// パイプ経由 STDIN
+	WS *Stdin = iCLI_GetStdin(FALSE);
+	BOOL Stdin_flg = (*Stdin ? TRUE : FALSE);
+
 	// -h | --help
-	if(! $ARGC || iCLI_getOptMatch(0, L"-h", L"--help"))
+	if((! Stdin_flg && ! $ARGC) || iCLI_getOptMatch(0, L"-h", L"--help"))
 	{
 		print_help();
 		imain_end();
@@ -31,26 +35,8 @@ main()
 		imain_end();
 	}
 
-	// -e | -echo
-	if(iCLI_getOptMatch(0, L"-e", L"-echo"))
-	{
-		WS *wa1[] = { L"-e", L"-echo" };
-		WS *wp1 = iws_cnv_escape(rtnArgPointer(wa1));
-			if(*wp1)
-			{
-				P1W(wp1);
-			}
-			// STDINモードへ移行
-			else
-			{
-				WS *wp2 = iCLI_GetStdin();
-					P1W(wp2);
-				ifree(wp2);
-			}
-		ifree(wp1);
-	}
-	// -s | -script
-	else if(iCLI_getOptMatch(0, L"-s", L"-script"))
+	// -s STR | -script STR
+	if(iCLI_getOptMatch(0, L"-s", L"-script"))
 	{
 		WS *wa1[] = { L"-s", L"-script" };
 		WS *Arg = rtnArgPointer(wa1);
@@ -89,17 +75,17 @@ main()
 				bExecuted = TRUE;
 
 				WS *wp1 = M2W(mp1);
-				WS *wp2 = iws_trimR(wp1);
-					// /usr/bin/env を無効化
-					WS *wp3 = iws_replace(wp2, L"/usr/bin/env ", L"", FALSE);
-					// /usr/bin/ を無効化
-					WS *wp4 = iws_replace(wp3, L"/usr/bin/", L"", FALSE);
-						WS *wp5 = iws_cats(3, wp4, L" ", Arg);
-							imv_systemW(wp5);
-						ifree(wp5);
-					ifree(wp4);
-					ifree(wp3);
-				ifree(wp2);
+					WS *wp2 = iws_trimR(wp1);
+						// /usr/bin/env を無効化
+						WS *wp3 = iws_replace(wp2, L"/usr/bin/env ", L"", FALSE);
+						// /usr/bin/ を無効化
+						WS *wp4 = iws_replace(wp3, L"/usr/bin/", L"", FALSE);
+							WS *wp5 = iws_cats(3, wp4, L" ", Arg);
+								imv_systemW(wp5);
+							ifree(wp5);
+						ifree(wp4);
+						ifree(wp3);
+					ifree(wp2);
 				ifree(wp1);
 			}
 			fclose(iFp);
@@ -109,6 +95,22 @@ main()
 		{
 			imv_systemW(Arg);
 		}
+	}
+	else
+	{
+		IESC();
+		for(UINT _u1 = 0; _u1 < $ARGC; _u1++)
+		{
+			WS *wp1 = iws_cnv_escape($ARGV[_u1]);
+				P1W(wp1);
+			ifree(wp1);
+		}
+	}
+
+	if(Stdin_flg)
+	{
+		IESC();
+		P1W(Stdin);
 	}
 
 	///idebug_map(); ifree_all(); idebug_map();
@@ -166,15 +168,13 @@ print_help()
 		IESC_OPT2	" [Option]"
 		IESC_OPT1	" [Str]\n\n\n"
 		IESC_LBL1	" (例１)"
-		IESC_STR1	" -echo 引数渡し\n"
+		IESC_STR1	" 引数渡し\n"
 					"    %s"
-		IESC_OPT2	" -echo"
-		IESC_OPT1	" \\033[92mテキスト\\n\\033[96m表示\\033[0m\\n\n\n"
+		IESC_OPT1	" \"\\033[92m\" \"テキスト\\n\" \"\\033[96m表示\" \"\\033[0m\\n\"\n\n"
 		IESC_LBL1	" (例２)"
-		IESC_STR1	" -echo パイプ渡し\n"
-		IESC_OPT1	"    ls -la |"
-		IESC_STR1	" %s"
-		IESC_OPT2	" -echo\n\n"
+		IESC_STR1	" パイプ渡し\n"
+		IESC_OPT1	"    ls |"
+		IESC_STR1	" %s\n\n"
 		IESC_LBL1	" (例３)"
 		IESC_STR1	" -script 直接実行\n"
 					"    %s"
@@ -200,8 +200,6 @@ print_help()
 	);
 	P1(
 		IESC_OPT2	" [Option]\n"
-		IESC_OPT21	"    -echo Str | -e Str\n"
-		IESC_STR1	"        Strをテキスト表示\n\n"
 		IESC_OPT21	"    -script Str | -s Str\n"
 		IESC_STR1	"        Strをスクリプトとして実行\n"
 					"        Strがスクリプトファイルのとき（1行目）#! のインタプリタを使用\n"
