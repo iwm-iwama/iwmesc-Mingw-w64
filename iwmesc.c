@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240522"
+#define   IWM_VERSION         "iwmesc_20240524"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -19,10 +19,10 @@ main()
 
 	// パイプ経由 STDIN
 	WS *Stdin = iCLI_GetStdin(FALSE);
-	BOOL Stdin_flg = (*Stdin ? TRUE : FALSE);
+	BOOL bStdin = (*Stdin ? TRUE : FALSE);
 
 	// -h | --help
-	if((! Stdin_flg && ! $ARGC) || iCLI_getOptMatch(0, L"-h", L"--help"))
+	if((! bStdin && ! $ARGC) || iCLI_getOptMatch(0, L"-h", L"--help"))
 	{
 		print_help();
 		imain_end();
@@ -35,8 +35,13 @@ main()
 		imain_end();
 	}
 
+	if(bStdin)
+	{
+		P1W(Stdin);
+	}
+
 	// -s STR | -script STR
-	if(iCLI_getOptMatch(0, L"-s", L"-script"))
+	if(! bStdin && iCLI_getOptMatch(0, L"-s", L"-script"))
 	{
 		WS *wa1[] = { L"-s", L"-script" };
 		WS *Arg = rtnArgPointer(wa1);
@@ -98,19 +103,12 @@ main()
 	}
 	else
 	{
-		IESC();
 		for(UINT _u1 = 0; _u1 < $ARGC; _u1++)
 		{
 			WS *wp1 = iws_cnv_escape($ARGV[_u1]);
 				P1W(wp1);
 			ifree(wp1);
 		}
-	}
-
-	if(Stdin_flg)
-	{
-		IESC();
-		P1W(Stdin);
 	}
 
 	///idebug_map(); ifree_all(); idebug_map();
