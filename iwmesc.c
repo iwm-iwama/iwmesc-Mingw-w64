@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
-#define   IWM_VERSION         "iwmesc_20240524"
+#define   IWM_FILENAME        "iwmesc"
+#define   IWM_UPDATE          "20240814"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -142,13 +143,9 @@ print_version()
 {
 	P1(IESC_STR2);
 	LN(80);
-	P(
-		" %s\n"
-		"    %s+%s\n"
-		,
-		IWM_COPYRIGHT,
-		IWM_VERSION,
-		LIB_IWMUTIL_VERSION
+	P1(
+		" " IWM_COPYRIGHT "\n"
+		"    " IWM_FILENAME "_" IWM_UPDATE " + " LIB_IWMUTIL_FILENAME "\n"
 	);
 	LN(80);
 	P1(IESC_RESET);
@@ -157,30 +154,28 @@ print_version()
 VOID
 print_help()
 {
-	MS *_cmd = "iwmesc.exe";
-
 	print_version();
-	P(
-		IESC_TITLE1	" エスケープシーケンスを含むコマンドを実行／出力 "	IESC_RESET	"\n\n"
-		IESC_STR1	"    %s"
+	P1(
+		IESC_TITLE1	" エスケープシーケンスを含むコマンドを実行／出力 " IESC_RESET "\n\n"
+		IESC_STR1	"    " IWM_FILENAME
 		IESC_OPT2	" [Option]"
 		IESC_OPT1	" [Str]\n\n\n"
 		IESC_LBL1	" (例１)"
 		IESC_STR1	" 引数渡し\n"
-					"    %s"
+					"    " IWM_FILENAME
 		IESC_OPT1	" \"\\033[92m\" \"テキスト\\n\" \"\\033[96m表示\" \"\\033[0m\\n\"\n\n"
 		IESC_LBL1	" (例２)"
 		IESC_STR1	" パイプ渡し\n"
 		IESC_OPT1	"    ls |"
-		IESC_STR1	" %s\n\n"
+		IESC_STR1	" " IWM_FILENAME "\n\n"
 		IESC_LBL1	" (例３)"
 		IESC_STR1	" -script 直接実行\n"
-					"    %s"
+					"    " IWM_FILENAME
 		IESC_OPT2	" -script"
 		IESC_OPT1	" python -c \"print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')\"\n\n"
 		IESC_LBL1	" (例４)"
 		IESC_STR1	" -script ファイルから実行\n"
-					"    %s"
+					"    " IWM_FILENAME
 		IESC_OPT2	" -script"
 		IESC_STR1   " \033[44m foo \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
@@ -189,12 +184,6 @@ print_help()
 					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
 					"\033[23C\033[44m                                                    \033[49m\n"
 		IESC_STR2	"\033[23C ※foo以降の引数は\"fooの引数\"になる\n\n"
-		,
-		_cmd,
-		_cmd,
-		_cmd,
-		_cmd,
-		_cmd
 	);
 	P1(
 		IESC_OPT2	" [Option]\n"
