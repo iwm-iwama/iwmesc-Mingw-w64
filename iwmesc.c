@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
 #define   IWM_FILENAME        "iwmesc"
-#define   IWM_UPDATE          "20240814"
+#define   IWM_UPDATE          "20241001"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -177,13 +177,13 @@ print_help()
 		IESC_STR1	" -script ファイルから実行\n"
 					"    " IWM_FILENAME
 		IESC_OPT2	" -script"
-		IESC_STR1   " \033[44m foo \033[49m\n"
-					"\033[23C\033[44m                                                    \033[49m\n"
-					"\033[23C\033[44m  #!/usr/bin/env python                             \033[49m\n"
-					"\033[23C\033[44m  #coding:utf-8                                     \033[49m\n"
-					"\033[23C\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
-					"\033[23C\033[44m                                                    \033[49m\n"
-		IESC_STR2	"\033[23C ※foo以降の引数は\"fooの引数\"になる\n\n"
+		IESC_STR1   "\033[20G\033[44m foo \033[49m\n"
+					"\033[20G\033[44m                                                    \033[49m\n"
+					"\033[20G\033[44m  #!/usr/bin/env python                             \033[49m\n"
+					"\033[20G\033[44m  #coding:utf-8                                     \033[49m\n"
+					"\033[20G\033[44m  print('\\033[92mテキスト\\n\\033[96m表示\\033[0m\\n')  \033[49m\n"
+					"\033[20G\033[44m                                                    \033[49m\n"
+		IESC_STR2	"\033[20G ※foo以降の引数は\"fooの引数\"になる\n\n"
 	);
 	P1(
 		IESC_OPT2	" [Option]\n"
