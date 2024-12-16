@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2024 iwm-iwama"
 #define   IWM_FILENAME        "iwmesc"
-#define   IWM_UPDATE          "20241001"
+#define   IWM_UPDATE          "20241216"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
 INT       main();
-WS        *rtnArgPointer(WS *aCmd[]);
+WS        *rtnArgPointerW(WS *aCmd[]);
 VOID      print_version();
 VOID      print_help();
 
@@ -45,7 +45,7 @@ main()
 	if(! bStdin && iCLI_getOptMatch(0, L"-s", L"-script"))
 	{
 		WS *wa1[] = { L"-s", L"-script" };
-		WS *Arg = rtnArgPointer(wa1);
+		WS *wpArg = rtnArgPointerW(wa1);
 
 		BOOL bExecuted = FALSE;
 
@@ -54,43 +54,51 @@ main()
 		if(iFp)
 		{
 			// 1行目を取得
-			//   #! の記述は「1行目」に限定する
 			MS buf[256];
 			MS *mp1 = fgets(buf, sizeof(buf), iFp);
-			INT iLen = imn_len(mp1);
+
+			MS *mpEnd = 0;
+
+			// 行末 '\n' '\r' 消去
+			mpEnd = mp1 + imn_len(mp1) - 1;
+			while(*mpEnd)
+			{
+				if(*mpEnd == '\n' || *mpEnd == '\r')
+				{
+					*mpEnd = '\0';
+				}
+				else
+				{
+					break;
+				}
+				--mpEnd;
+			}
 
 			// UTF-8 BOM
-			if(iLen >= 3 && mp1[0] == (MS)0xEF && mp1[1] == (MS)0xBB && mp1[2] == (MS)0xBF)
+			if(imn_len(mp1) >= 3 && mp1[0] == (MS)0xEF && mp1[1] == (MS)0xBB && mp1[2] == (MS)0xBF)
 			{
 				mp1 += 3;
-				iLen -= 3;
 			}
 
-			// 先頭の空白をスルー
-			while(iLen >= 0 && (*mp1 == ' ' || *mp1 == '\t'))
+			// シバン行を取得
+			//   #! の記述は「1行目1列目」に限定する
+			if(imn_len(mp1) >= 2 && mp1[0] == '#' && mp1[1] == '!')
 			{
-				++mp1;
-				--iLen;
-			}
-
-			// #! インタプリタ名を取得
-			if(iLen >= 2 && mp1[0] == '#' && mp1[1] == '!')
-			{
-				// strlen("#!") => 2
-				mp1 += 2;
 				bExecuted = TRUE;
 
-				WS *wp1 = M2W(mp1);
-					WS *wp2 = iws_trimR(wp1);
-						// /usr/bin/env を無効化
-						WS *wp3 = iws_replace(wp2, L"/usr/bin/env ", L"", FALSE);
-						// /usr/bin/ を無効化
-						WS *wp4 = iws_replace(wp3, L"/usr/bin/", L"", FALSE);
-							WS *wp5 = iws_cats(3, wp4, L" ", Arg);
-								imv_systemW(wp5);
-							ifree(wp5);
-						ifree(wp4);
-						ifree(wp3);
+				mpEnd = mp1 + imn_len(mp1) - 1;
+				while(*mpEnd)
+				{
+					if(*mpEnd == ' ' || *mpEnd == '/' || *mpEnd == '!')
+					{
+						break;
+					}
+					--mpEnd;
+				}
+				++mpEnd;
+				WS *wp1 = M2W(mpEnd);
+					WS *wp2 = iws_cats(3, wp1, L" ", wpArg);
+						imv_systemW(wp2);
 					ifree(wp2);
 				ifree(wp1);
 			}
@@ -99,7 +107,7 @@ main()
 
 		if(! bExecuted)
 		{
-			imv_systemW(Arg);
+			imv_systemW(wpArg);
 		}
 	}
 	else
@@ -119,7 +127,7 @@ main()
 }
 
 WS
-*rtnArgPointer(
+*rtnArgPointerW(
 	WS *aCmd[]
 )
 {
