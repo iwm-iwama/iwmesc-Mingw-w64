@@ -15,11 +15,18 @@ set op_link=-Os -Wall -Wextra -lgdi32 -luser32 -lshlwapi
 
 :: Assembler
 ::	echo --- Compile -S ------------------------------------
-::	cp -f %fn%.s %fn%.s.old
+	if exist "%fn%_old.s" (
+		rm "%fn%_old.s"
+	)
+	if exist "%fn%.s" (
+		mv "%fn%.s" "%fn%_old.s"
+	)
+
+::	echo --- Compile gcc -S ------------------------------------------
 ::	for %%s in (%src%) do (
 ::		%cc% %%s -S %op_link%
-::		echo %%~ns.s
 ::	)
+::	ls -la *.s
 ::	echo.
 
 :: Make
