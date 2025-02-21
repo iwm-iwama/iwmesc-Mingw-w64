@@ -996,7 +996,7 @@ iConsole_EscOn()
 		P("%lld 文字（改行文字含む）\n\n", iwn_len(wp1));
 	ifree(wp1);
 */
-// v2025-02-15
+// v2025-02-21
 WS
 *iCLI_GetStdin(
 	BOOL bInputKey // STDINが空のとき TRUE=手入力モード／FALSE=空文字を返す
@@ -1042,8 +1042,18 @@ WS
 		MS *mp1 = icalloc_MS(mp1Size);
 			UINT mp1End = 0;
 			// Win32API ReadFile() は日本語表示されないので使用しない
-			while(mp1Size == fread((mp1 + mp1End), sizeof(MS), mp1Size, STDIN))
+			while(TRUE)
 			{
+				UINT u1 = fread((mp1 + mp1End), sizeof(MS), mp1Size, STDIN);
+				if(u1 < mp1Size)
+				{
+					//【重要】
+					//   STDINからファイルを読み込むとき（例：cat file）、
+					//   バッファに書き込まれるデータと返数の書込サイズが異なることがある。
+					//   よって、バッファ末尾に'\0'を付与する必要がある。
+					*(mp1 + mp1End + u1) = '\0';
+					break;
+				}
 				mp1End += mp1Size;
 				mp1 = irealloc_MS(mp1, (mp1End + mp1Size));
 			}
