@@ -1,0 +1,5 @@
+#!/usr/bin/env dash
+echo -n "\033[93m"
+date "+%Y/%m/%d %H:%M:%S"
+echo -n "\033[0m"
+echo "\033[92mテキスト\n\033[96m表示\033[0m"
