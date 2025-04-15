@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 #define   IWM_COPYRIGHT       "(C)2023-2025 iwm-iwama"
 #define   IWM_FILENAME        "iwmesc"
-#define   IWM_UPDATE          "20250405"
+#define   IWM_UPDATE          "20250413"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -18,7 +18,7 @@ main()
 	///iCLI_VarList();
 
 	// パイプ経由 STDIN
-	WS *wpStdin = iCLI_GetStdin(FALSE);
+	WS *wpStdin = iCLI_getStdin(FALSE);
 
 	// -t | -text
 	if(iCLI_getOptMatch(0, L"-t", L"-text") && *wpStdin)
@@ -53,15 +53,12 @@ main()
 		if(iFp)
 		{
 			// 1行目を取得
-			MS Buf[256];
-			MS *pBuf = fgets(Buf, sizeof(Buf), iFp);
-			// 行末 '\n' '\r' 消去
-			MS *mp1 = ims_trimR(pBuf);
-				// UTF-8 BOM
-				if(imn_len(mp1) >= 3 && mp1[0] == (MS)0xEF && mp1[1] == (MS)0xBB && mp1[2] == (MS)0xBF)
-				{
-					mp1 += 3;
-				}
+			MS sBuf[256];
+			fgets(sBuf, sizeof(sBuf), iFp);
+			// UTF-8 BOM を仮変換
+			memset(sBuf, '\n', iun_bomLen(sBuf));
+			// 前後の '\n' 等を消去
+			MS *mp1 = ims_trim(sBuf);
 				// シバン行を取得
 				//   #! の記述は「1行1列目」に限定する
 				if(imn_len(mp1) >= 2 && mp1[0] == '#' && mp1[1] == '!')
