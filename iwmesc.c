@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 #define IWM_COPYRIGHT "(C)2023-2026 iwm-iwama"
 #define IWM_FILENAME "iwmesc"
-#define IWM_UPDATE "20260618"
+#define IWM_UPDATE "20260717"
 //------------------------------------------------------------------------------
 #include "lib_iwmutil2.h"
 
@@ -98,7 +98,7 @@ INT main()
 		{
 			iCLI_systemW(iVBW_getStr(iVBW));
 		}
-		iVBW_freeAll(iVBW);
+		iVBW_free2(iVBW);
 	}
 	// else
 	else
@@ -113,14 +113,12 @@ INT main()
 		WS *wp1 = iws_cnv_escape(iVBW_getStr(iVBW));
 		QP1W(wp1);
 		ifree(wp1);
-		iVBW_freeAll(iVBW);
+		iVBW_free2(iVBW);
 	}
 
 	ifree(wpStdin);
 
 	// Debug
-	/// idebug_map(NULL);
-	/// ifree_all();
 	/// idebug_map(NULL);
 
 	// 最終処理
